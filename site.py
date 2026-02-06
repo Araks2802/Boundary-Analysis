@@ -1,21 +1,37 @@
-# app.py
+# site.py
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
 # -------------------------------
 # Page config
 # -------------------------------
 st.set_page_config(
     page_title="Boundary Analysis",
-    layout="wide"
+    layout="wide",
+    page_icon="🏏"
 )
 
+# -------------------------------
+# Header Image (safe load)
+# -------------------------------
+header_path = "assets/header.png"
+if os.path.exists(header_path):
+    st.image(header_path, use_container_width=True)
+else:
+    st.warning("Header image not found! Place a header.jpg in assets/ folder.")
+
+# -------------------------------
+# Custom header
+# -------------------------------
 st.markdown(
     """
-    <h1 style='text-align:center; color:#FF6F61;'>🏏 Boundary Analysis Dashboard</h1>
-    <p style='text-align:center; color:#555;'>Analyze what happens after a 4 or 6 and view yearly trends</p>
+    <div style='text-align:center;'>
+        <h1 style='color:#FF6F61; font-size:48px;'>🏏 Boundary Analysis Dashboard</h1>
+        <p style='color:#FFD700; font-size:18px;'>Analyze what happens after a 4 or 6 and view yearly trends</p>
+    </div>
     """,
     unsafe_allow_html=True
 )
@@ -70,9 +86,9 @@ def load_data():
         lambda x: x / x.sum() * 100
     )
 
-    return df, summary
+    return df, summary, boundary_df
 
-df, summary = load_data()
+df, summary, boundary_df = load_data()
 
 # -------------------------------
 # Sidebar filters
@@ -82,6 +98,29 @@ years = sorted(summary["year"].dropna().unique())
 
 # Option to Compare or Single Year
 mode = st.sidebar.radio("Mode", ["Single Year", "Compare Years"])
+
+# -------------------------------
+# Function for metric card
+# -------------------------------
+def metric_card(title, value, color="#FF6F61"):
+    st.markdown(
+        f"""
+        <div style='
+            background: {color};
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align:center;
+            font-size:20px;
+            margin-bottom:10px;
+            box-shadow: 2px 4px 8px rgba(0,0,0,0.4);
+        '>
+            <strong>{title}</strong><br>
+            <span style='font-size:28px;'>{value}</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # -------------------------------
 # SINGLE YEAR VIEW
@@ -137,14 +176,13 @@ if mode == "Single Year":
 
     with col2:
         st.subheader(f"Total 4s & 6s in {selected_year}")
+
         year_df = df[(df["year"] == selected_year) & (df["valid_ball"]==1)]
         total_4s = year_df[year_df["runs_batter"]==4].shape[0]
         total_6s = year_df[year_df["runs_batter"]==6].shape[0]
-        totals_table = pd.DataFrame({
-            "Boundary": ["4s", "6s"],
-            "Count": [total_4s, total_6s]
-        })
-        st.table(totals_table)
+
+        metric_card("Total 4s", total_4s, color="#22c55e")   # Green
+        metric_card("Total 6s", total_6s, color="#f97316")   # Orange
 
 # -------------------------------
 # COMPARE YEARS VIEW
@@ -172,13 +210,11 @@ else:
 
     col1, col2 = st.columns(2)
 
-    # -------------------------------
     # Bar charts for each year
-    # -------------------------------
     with col1:
         st.subheader(f"{year1} - Next Ball Outcome")
         fig, ax = plt.subplots(figsize=(6,4))
-        bars = ax.bar(df1["next_ball_outcome"], df1["percentage"], color="#FFB347", alpha=0.85)
+        bars = ax.bar(df1["next_ball_outcome"], df1["percentage"], color="#22c55e", alpha=0.85)
         for bar in bars:
             height = bar.get_height()
             ax.annotate(f'{height:.1f}%',
@@ -192,7 +228,7 @@ else:
     with col2:
         st.subheader(f"{year2} - Next Ball Outcome")
         fig, ax = plt.subplots(figsize=(6,4))
-        bars = ax.bar(df2["next_ball_outcome"], df2["percentage"], color="#FF6F61", alpha=0.85)
+        bars = ax.bar(df2["next_ball_outcome"], df2["percentage"], color="#f97316", alpha=0.85)
         for bar in bars:
             height = bar.get_height()
             ax.annotate(f'{height:.1f}%',
@@ -203,17 +239,14 @@ else:
         ax.set_ylim(0, max(df1["percentage"].max(), df2["percentage"].max())+10)
         st.pyplot(fig)
 
-    # -------------------------------
-    # Totals table for both years
-    # -------------------------------
+    # Totals cards for both years
     st.subheader(f"Total 4s & 6s in {year1} vs {year2}")
 
-    totals = []
-    for y in [year1, year2]:
-        year_df = df[(df["year"]==y) & (df["valid_ball"]==1)]
-        total_4s = year_df[year_df["runs_batter"]==4].shape[0]
-        total_6s = year_df[year_df["runs_batter"]==6].shape[0]
-        totals.append([y, total_4s, total_6s])
+    col1, col2, col3, col4 = st.columns(4)
+    y1_df = df[(df["year"]==year1) & (df["valid_ball"]==1)]
+    y2_df = df[(df["year"]==year2) & (df["valid_ball"]==1)]
 
-    totals_df = pd.DataFrame(totals, columns=["Year", "Total 4s", "Total 6s"])
-    st.table(totals_df)
+    metric_card("4s in " + str(year1), y1_df[y1_df["runs_batter"]==4].shape[0], color="#22c55e")
+    metric_card("6s in " + str(year1), y1_df[y1_df["runs_batter"]==6].shape[0], color="#f97316")
+    metric_card("4s in " + str(year2), y2_df[y2_df["runs_batter"]==4].shape[0], color="#22c55e")
+    metric_card("6s in " + str(year2), y2_df[y2_df["runs_batter"]==6].shape[0], color="#f97316")
