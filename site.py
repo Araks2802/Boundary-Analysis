@@ -171,7 +171,7 @@ if mode=="Single Year":
             avg_sixes = total_sixes / total_matches if total_matches else 0
             metric_card(
                 "Avg Sixes per Match",
-                f"{avg_sixes:.2f}",
+                f"{avg_sixes:.1f}",
                 "Six-hitting rate",
                 "linear-gradient(135deg,#ec4899,#db2777)"
             )
