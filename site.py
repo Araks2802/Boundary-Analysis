@@ -156,11 +156,26 @@ if mode=="Single Year":
 
         # ---- Extra Metrics
         st.markdown("### ⚡ Additional Insights")
-        c3,c4 = st.columns(2)
+        c3,c4, c5 = st.columns(3)
         with c3:
-            dot_pct = dot_ball_summary[(dot_ball_summary["year"]==year)&(dot_ball_summary["runs_batter"]==boundary)]["dot_ball_pct"].values[0]
-            metric_card("Dot Balls %",f"{dot_pct:.1f}%","Next Ball=0","linear-gradient(135deg,#3b82f6,#2563eb)")
+            total_matches = year_df["match_id"].nunique()
+            metric_card(
+                "Total Matches",
+                total_matches,
+                "Season matches",
+                "linear-gradient(135deg,#6366f1,#4f46e5)"
+            )
+
         with c4:
+            total_sixes = year_df[year_df["runs_batter"]==6].shape[0]
+            avg_sixes = total_sixes / total_matches if total_matches else 0
+            metric_card(
+                "Avg Sixes per Match",
+                f"{avg_sixes:.2f}",
+                "Six-hitting rate",
+                "linear-gradient(135deg,#ec4899,#db2777)"
+            )
+        with c5:
             next3_avg = avg_next3[avg_next3["year"]==year]["next3_sum"].mean()
             metric_card("Avg Runs Next 3 Balls",f"{next3_avg:.1f}","Rolling 3 Balls","linear-gradient(135deg,#facc15,#eab308)")
 
@@ -179,6 +194,9 @@ if mode=="Single Year":
     sns.lineplot(data=trend_data,x="year",y="count",hue="runs_batter",palette={4:"#22c55e",6:"#f97316"},marker="o",ax=ax)
     ax.set_ylabel("Total Boundaries")
     ax.set_xlabel("Year")
+    # Force years to be integers
+    ax.set_xticks(trend_data["year"].unique())  # only show actual years
+    ax.set_xticklabels(trend_data["year"].unique().astype(int))  # make them whole numbers
     st.pyplot(fig)
 
 # ===============================
