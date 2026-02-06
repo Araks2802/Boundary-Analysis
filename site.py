@@ -47,7 +47,7 @@ st.divider()
 # -------------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("IPL.csv")
+    df = pd.read_csv("IPL_small.csv")
 
     df["date"] = pd.to_datetime(df["date"], format="%d/%m/%Y", errors="coerce")
     df["year"] = df["date"].dt.year
